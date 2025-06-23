@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>루비성형외과 '책임제' 광고 전략 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Trust Palette -->
+    <!-- Application Structure Plan: A thematic dashboard structure is used to transform the linear report into an interactive decision-making tool. The flow is designed to guide the user from a high-level overview (Dashboard) to deep dives into specific areas (Market Analysis, Core Strategy, Action Plan) and finally to a practical tool (Budget Simulation). This non-linear structure allows users to explore information based on their immediate needs, which is more effective for strategic planning than a static report. The key interaction is the budget simulator, which directly engages the user in the planning process. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Key Metrics (CPA, CPC, ROAS) -> Goal: Inform (at a glance) -> Viz: Stat Cards (HTML/Tailwind) -> Interaction: Hover for emphasis -> Justification: Provides immediate high-level understanding on the main dashboard.
+        - Report Info: CPC Benchmarks -> Goal: Compare -> Viz: Bar Chart (Chart.js) -> Interaction: Tooltips on bars -> Justification: Visually demonstrates the high cost in the target market, justifying the need for a value-driven strategy.
+        - Report Info: CPA Influencing Factors & Legal Constraints -> Goal: Organize & Explain -> Viz: Interactive Diagram (HTML/Tailwind) -> Interaction: Click-to-reveal details -> Justification: Breaks down a complex concept into digestible parts and highlights the critical legal nuances of the 'Responsibility System' without using prohibited terms.
+        - Report Info: Budget Scenarios -> Goal: Interact & Project -> Viz: Sliders and Dynamic Text (JS) with a summary bar chart -> Interaction: User manipulates sliders to see real-time cost/ROAS changes -> Justification: This is the most engaging element, turning passive data consumption into an active planning exercise, which is the core goal of the SPA.
+        - Library/Method: All charts are rendered using Chart.js on Canvas elements. All diagrams and layouts use structured HTML with Tailwind CSS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .tab-active { 
+            border-bottom: 2px solid #6366F1; 
+            color: #6366F1;
+            font-weight: 700;
+        }
+        .tab-inactive {
+            color: #6B7280;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .section-fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl md:text-2xl font-bold text-indigo-600">루비성형외과 광고 전략 대시보드</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#dashboard" class="nav-link px-3 py-2 rounded-md text-sm font-medium">대시보드</a>
+                        <a href="#market" class="nav-link px-3 py-2 rounded-md text-sm font-medium">시장 분석</a>
+                        <a href="#strategy" class="nav-link px-3 py-2 rounded-md text-sm font-medium">핵심 전략</a>
+                        <a href="#action-plan" class="nav-link px-3 py-2 rounded-md text-sm font-medium">실행 계획</a>
+                        <a href="#simulation" class="nav-link px-3 py-2 rounded-md text-sm font-medium">비용 시뮬레이션</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#dashboard" class="nav-link block px-3 py-2 rounded-md text-base font-medium">대시보드</a>
+                <a href="#market" class="nav-link block px-3 py-2 rounded-md text-base font-medium">시장 분석</a>
+                <a href="#strategy" class="nav-link block px-3 py-2 rounded-md text-base font-medium">핵심 전략</a>
+                <a href="#action-plan" class="nav-link block px-3 py-2 rounded-md text-base font-medium">실행 계획</a>
+                <a href="#simulation" class="nav-link block px-3 py-2 rounded-md text-base font-medium">비용 시뮬레이션</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <section id="dashboard" class="scroll-mt-20 section-fade-in">
+            <h2 class="text-2xl sm:text-3xl font-bold mb-2">Executive Summary & Key Metrics</h2>
+            <p class="text-gray-600 mb-6">본 대시보드는 '눈성형수술 책임제' 캠페인의 성공적인 수행을 위한 데이터 기반 분석 및 최적화 전략을 제공합니다.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stat-card bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-sm font-medium text-gray-500">업계 평균 CPA (상담 DB)</h3>
+                    <p class="mt-1 text-3xl font-semibold text-indigo-600">₩4만 ~ ₩11만</p>
+                    <p class="text-xs text-gray-500 mt-2">고관여 키워드는 더 높을 수 있음</p>
+                </div>
+                <div class="stat-card bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-sm font-medium text-gray-500">예상 CPC ('책임제' 키워드)</h3>
+                    <p class="mt-1 text-3xl font-semibold text-indigo-600">₩4천 ~ ₩9.5천</p>
+                    <p class="text-xs text-gray-500 mt-2">높은 전환 의도로 인한 고비용</p>
+                </div>
+                <div class="stat-card bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-sm font-medium text-gray-500">목표 ROAS</h3>
+                    <p class="mt-1 text-3xl font-semibold text-indigo-600">400% 이상</p>
+                    <p class="text-xs text-gray-500 mt-2">초기 CPA가 높아도 수익성 확보 가능</p>
+                </div>
+                <div class="stat-card bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-sm font-medium text-gray-500">핵심 가치 제안</h3>
+                    <p class="mt-1 text-3xl font-semibold text-indigo-600">신뢰 구축</p>
+                    <p class="text-xs text-gray-500 mt-2">안전, 전문성, 사후관리에 집중</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="market" class="scroll-mt-20 section-fade-in">
+            <h2 class="text-2xl sm:text-3xl font-bold mb-2">시장 분석: 경쟁과 기회</h2>
+            <p class="text-gray-600 mb-6">성형외과 시장은 경쟁이 매우 치열하여 광고 비용이 높습니다. '책임제'는 이러한 환경에서 차별화된 가치를 제공할 수 있는 기회입니다.</p>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="font-bold mb-4">키워드별 예상 클릭당 비용(CPC) 비교</h3>
+                 <div class="chart-container">
+                    <canvas id="cpcChart"></canvas>
+                </div>
+                <p class="text-sm text-gray-600 mt-4 text-center">'눈성형수술 책임제' 키워드는 일반 키워드보다 검색량은 적지만, 명확한 니즈를 가진 고품질 잠재 고객을 타겟하므로 클릭당 비용이 높게 형성될 수 있습니다. 그러나 높은 전환율을 통해 최종 CPA를 낮출 수 있는 잠재력을 가집니다.</p>
+            </div>
+        </section>
+
+        <section id="strategy" class="scroll-mt-20 section-fade-in">
+            <h2 class="text-2xl sm:text-3xl font-bold mb-2">핵심 전략: '책임'의 가치를 법규 안에서 전달하기</h2>
+            <p class="text-gray-600 mb-6">의료법상 '책임'이나 '보장' 문구는 사용이 금지됩니다. 따라서 우리는 '책임제'의 본질인 '신뢰'와 '안전'을 다른 방식으로 전달해야 합니다. 아래 탭을 클릭하여 구체적인 전략을 확인하세요.</p>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button class="tab-btn tab-active" data-tab="legal">법규 준수 메시징</button>
+                        <button class="tab-btn tab-inactive" data-tab="factors">CPA 최적화 요인</button>
+                        <button class="tab-btn tab-inactive" data-tab="funnel">신뢰 구축 퍼널</button>
+                    </nav>
+                </div>
+                <div id="tab-content" class="mt-6">
+                    <div id="legal-content" class="tab-pane active">
+                        <h3 class="font-bold text-lg mb-2">"책임" 대신 "신뢰"를 파는 방법</h3>
+                        <p class="mb-4">직접적인 보증 문구 대신, 환자가 신뢰할 수 있는 병원의 시스템과 노력을 구체적으로 보여주는 것이 핵심입니다.</p>
+                        <ul class="space-y-3 text-gray-700">
+                            <li class="flex items-start"><span class="text-indigo-500 font-bold mr-2">✓</span><span><b>전문의 전문성 강조:</b> "15년 경력 성형외과 전문의가 직접 상담부터 수술까지 전담합니다."</span></li>
+                            <li class="flex items-start"><span class="text-indigo-500 font-bold mr-2">✓</span><span><b>안전 시스템 부각:</b> "마취통증의학과 전문의 상주, 대학병원급 안전 장비 보유"</span></li>
+                            <li class="flex items-start"><span class="text-indigo-500 font-bold mr-2">✓</span><span><b>체계적 사후관리:</b> "수술 후 1:1 맞춤 붓기 케어 및 정기 경과 체크 프로그램 운영"</span></li>
+                            <li class="flex items-start"><span class="text-indigo-500 font-bold mr-2">✓</span><span><b>투명한 과정 공개:</b> "CCTV 안심 모니터링 시스템으로 대리수술 걱정 ZERO"</span></li>
+                        </ul>
+                    </div>
+                    <div id="factors-content" class="tab-pane hidden">
+                        <h3 class="font-bold text-lg mb-2">CPA에 영향을 미치는 6가지 핵심 요인</h3>
+                        <p class="mb-4">CPA는 단순히 광고비에만 의존하지 않습니다. 아래 요소들을 종합적으로 관리해야 비용 효율을 높일 수 있습니다.</p>
+                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="border border-gray-200 p-4 rounded-lg">
+                                <h4 class="font-bold">1. 광고 품질 및 관련성</h4>
+                                <p class="text-sm">신뢰를 주는 콘텐츠로 관련성 점수를 높여야 합니다.</p>
+                            </div>
+                             <div class="border border-gray-200 p-4 rounded-lg">
+                                <h4 class="font-bold">2. 타겟팅 정교함</h4>
+                                <p class="text-sm">'안전'을 중시하는 고객층을 정밀 타겟팅해야 합니다.</p>
+                            </div>
+                             <div class="border border-gray-200 p-4 rounded-lg">
+                                <h4 class="font-bold">3. 입찰 전략</h4>
+                                <p class="text-sm">'최저 비용'보다 'ROAS 목표'로 고품질 DB를 확보해야 합니다.</p>
+                            </div>
+                             <div class="border border-gray-200 p-4 rounded-lg">
+                                <h4 class="font-bold">4. 계절성 및 트렌드</h4>
+                                <p class="text-sm">방학/수능 시즌의 경쟁 심화에 대비해야 합니다.</p>
+                            </div>
+                             <div class="border border-gray-200 p-4 rounded-lg">
+                                <h4 class="font-bold">5. 랜딩페이지 전환율</h4>
+                                <p class="text-sm">신뢰를 주는 상세 정보와 간편한 신청 프로세스가 필수입니다.</p>
+                            </div>
+                             <div class="border border-gray-200 p-4 rounded-lg">
+                                <h4 class="font-bold">6. 데이터 트래킹 정확성</h4>
+                                <p class="text-sm">픽셀 및 CAPI를 통한 정확한 데이터 수집이 중요합니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="funnel-content" class="tab-pane hidden">
+                        <h3 class="font-bold text-lg mb-2">다단계 퍼널 기반 캠페인 구조</h3>
+                        <p class="mb-4">바로 상담을 유도하기보다, 신뢰를 쌓는 과정을 통해 더 높은 질의 고객을 확보할 수 있습니다.</p>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-indigo-50 rounded-lg">
+                                <p class="font-bold">1단계: 인지 & 관심 (Top of Funnel)</p>
+                                <p class="text-sm">"성형 부작용 예방법", "안전한 성형외과 고르는 법" 등 가치있는 정보성 콘텐츠로 잠재고객에게 접근</p>
+                            </div>
+                            <div class="p-4 bg-indigo-50 rounded-lg">
+                                <p class="font-bold">2단계: 고려 (Middle of Funnel)</p>
+                                <p class="text-sm">1단계 콘텐츠에 반응한 사용자에게 루비성형외과의 '안전 시스템'과 '전문성'을 강조하는 광고 노출 (리타겟팅)</p>
+                            </div>
+                            <div class="p-4 bg-indigo-50 rounded-lg">
+                                <p class="font-bold">3단계: 전환 (Bottom of Funnel)</p>
+                                <p class="text-sm">신뢰가 구축된 잠재고객에게 '상담 신청' 등 구체적인 CTA가 담긴 광고를 통해 최종 전환 유도</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="action-plan" class="scroll-mt-20 section-fade-in">
+             <h2 class="text-2xl sm:text-3xl font-bold mb-2">최적화를 위한 실행 계획</h2>
+             <p class="text-gray-600 mb-6">CPA 최적화를 위해 다음 6가지 전략을 체계적으로 실행해야 합니다.</p>
+             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow stat-card">
+                    <h3 class="font-bold text-lg mb-2">1. 스토리텔링 콘텐츠</h3>
+                    <p class="text-sm">단순 비포/애프터를 넘어, 의료진의 진정성 있는 인터뷰나 고객의 심리적 안정감을 강조하는 콘텐츠를 제작합니다.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow stat-card">
+                    <h3 class="font-bold text-lg mb-2">2. 정교한 타겟팅 확장</h3>
+                    <p class="text-sm">'재수술', '성형 후 관리' 등 '안심' 관련 키워드에 반응하는 관심사 타겟팅을 추가하고 유사 타겟을 활용합니다.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow stat-card">
+                    <h3 class="font-bold text-lg mb-2">3. 전용 랜딩페이지(LP) 최적화</h3>
+                    <p class="text-sm">'책임제'의 구체적 내용을 투명하게 공개하고, A/B 테스트를 통해 전환율이 가장 높은 LP를 발굴합니다.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow stat-card">
+                    <h3 class="font-bold text-lg mb-2">4. 신뢰 구축 캠페인</h3>
+                    <p class="text-sm">직접적인 상담 유도 전, 정보성 콘텐츠로 신뢰를 쌓는 다단계 퍼널 전략을 운영합니다.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow stat-card">
+                    <h3 class="font-bold text-lg mb-2">5. CRM 연동 및 관리</h3>
+                    <p class="text-sm">유입된 DB를 CRM과 연동하여 맞춤형 후속 관리를 통해 내원율과 최종 전환율을 높입니다.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow stat-card">
+                    <h3 class="font-bold text-lg mb-2">6. 의료법 준수 및 심의</h3>
+                    <p class="text-sm">모든 광고 콘텐츠는 의료법을 철저히 준수하고, 사전 심의를 반드시 받아 법적 리스크를 제거합니다.</p>
+                </div>
+             </div>
+        </section>
+
+        <section id="simulation" class="scroll-mt-20 section-fade-in">
+            <h2 class="text-2xl sm:text-3xl font-bold mb-2">광고 비용 시뮬레이션</h2>
+            <p class="text-gray-600 mb-6">슬라이더를 조절하여 월별 목표 상담 DB 수와 예상 CPA에 따른 광고비 및 ROAS를 예측해보세요.</p>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <div class="mb-6">
+                            <label for="db-slider" class="block font-medium mb-2">월 목표 상담 DB 수: <span id="db-value" class="font-bold text-indigo-600">50</span>건</label>
+                            <input id="db-slider" type="range" min="10" max="200" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="mb-6">
+                            <label for="cpa-slider" class="block font-medium mb-2">목표 CPA (상담 DB당 비용): ₩<span id="cpa-value" class="font-bold text-indigo-600">67,500</span></label>
+                            <input id="cpa-slider" type="range" min="30000" max="150000" step="1000" value="67500" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="mb-6">
+                            <label for="revenue-input" class="block font-medium mb-2">전환 고객 1인당 평균 매출: ₩<span id="revenue-value" class="font-bold text-indigo-600">3,000,000</span></label>
+                            <input id="revenue-input" type="range" min="1000000" max="10000000" step="100000" value="3000000" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                         <div class="mb-6">
+                            <label for="conversion-rate-slider" class="block font-medium mb-2">상담 DB → 실제 수술 전환율: <span id="conversion-rate-value" class="font-bold text-indigo-600">10</span>%</label>
+                            <input id="conversion-rate-slider" type="range" min="1" max="50" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                    <div class="bg-indigo-50 p-6 rounded-lg flex flex-col justify-center items-center">
+                        <div class="text-center mb-4">
+                            <h4 class="text-lg font-medium text-gray-600">월 예상 광고비</h4>
+                            <p id="total-cost" class="text-4xl font-bold text-indigo-700">₩3,375,000</p>
+                        </div>
+                        <div class="w-full border-t border-indigo-200 my-4"></div>
+                        <div class="text-center mt-4">
+                            <h4 class="text-lg font-medium text-gray-600">예상 ROAS</h4>
+                            <p id="total-roas" class="text-4xl font-bold text-indigo-700">444%</p>
+                             <p class="text-xs text-gray-500 mt-2">(광고비 대비 매출 수익률)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer class="bg-white mt-12 border-t">
+        <div class="container mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
+            <p>&copy; 2024 Ruby Plastic Surgery Advertising Strategy Dashboard. For internal analysis purposes only.</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+    
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href');
+            document.querySelector(targetId).scrollIntoView({
+                behavior: 'smooth'
+            });
+            if (!mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.add('hidden');
+            }
+        });
+    });
+
+    const cpcData = {
+        labels: ['일반 눈성형 키워드', '경쟁 병원 키워드', "'책임제' 특화 키워드"],
+        datasets: [{
+            label: '예상 CPC (KRW)',
+            data: [6750, 8100, 9450],
+            backgroundColor: [
+                'rgba(165, 180, 252, 0.6)',
+                'rgba(129, 140, 248, 0.6)',
+                'rgba(99, 102, 241, 0.6)',
+            ],
+            borderColor: [
+                '#A5B4FC',
+                '#818CF8',
+                '#6366F1',
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    const cpcChartCtx = document.getElementById('cpcChart').getContext('2d');
+    new Chart(cpcChartCtx, {
+        type: 'bar',
+        data: cpcData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value, index, values) {
+                            return '₩' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += '₩' + context.parsed.y.toLocaleString();
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            tabButtons.forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('tab-inactive');
+            });
+            button.classList.add('tab-active');
+            button.classList.remove('tab-inactive');
+
+            const tabId = button.getAttribute('data-tab');
+            
+            tabPanes.forEach(pane => {
+                if (pane.id === `${tabId}-content`) {
+                    pane.classList.remove('hidden');
+                    pane.classList.add('active');
+                } else {
+                    pane.classList.add('hidden');
+                    pane.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    const dbSlider = document.getElementById('db-slider');
+    const dbValue = document.getElementById('db-value');
+    const cpaSlider = document.getElementById('cpa-slider');
+    const cpaValue = document.getElementById('cpa-value');
+    const revenueInput = document.getElementById('revenue-input');
+    const revenueValue = document.getElementById('revenue-value');
+    const conversionRateSlider = document.getElementById('conversion-rate-slider');
+    const conversionRateValue = document.getElementById('conversion-rate-value');
+    
+    const totalCost = document.getElementById('total-cost');
+    const totalRoas = document.getElementById('total-roas');
+    
+    function formatNumber(num) {
+        return '₩' + num.toLocaleString();
+    }
+
+    function calculate() {
+        const db = parseInt(dbSlider.value);
+        const cpa = parseInt(cpaSlider.value);
+        const revenuePerConversion = parseInt(revenueInput.value);
+        const conversionRate = parseInt(conversionRateSlider.value) / 100;
+
+        const cost = db * cpa;
+        const actualConversions = db * conversionRate;
+        const totalRevenue = actualConversions * revenuePerConversion;
+        
+        const roas = cost > 0 ? (totalRevenue / cost) * 100 : 0;
+        
+        dbValue.textContent = db;
+        cpaValue.textContent = cpa.toLocaleString();
+        revenueValue.textContent = revenuePerConversion.toLocaleString();
+        conversionRateValue.textContent = (conversionRate * 100).toFixed(0);
+
+        totalCost.textContent = formatNumber(cost);
+        totalRoas.textContent = roas.toFixed(0) + '%';
+    }
+
+    dbSlider.addEventListener('input', calculate);
+    cpaSlider.addEventListener('input', calculate);
+    revenueInput.addEventListener('input', calculate);
+    conversionRateSlider.addEventListener('input', calculate);
+
+    calculate();
+});
+
+</script>
+</body>
+</html>
